@@ -24,8 +24,7 @@ function initMap() {
         zoom: 15
       });
       bounds.extend(pos);
-      infoWindow.setPosition(pos);
-      infoWindow.setContent('You are here');
+      createPosMarker(pos);
       infoWindow.open(map);
       map.setCenter(pos);
       // Call Places Nearby Search on user's location
@@ -71,109 +70,220 @@ function getNearbyPlaces(position) {
 function nearbyCallback(results, status) {
   if (status == google.maps.places.PlacesServiceStatus.OK) {
     createMarkers(results);
-    createCards(results);
+    let newList = createJSON(results);
+
+    console.log(newList[1].placePhoto[0].getUrl())
+    createCard(newList)
+    var cards = $();
+    // Store all the card nodes
+    newList.forEach(function (item, i) {
+      cards = cards.add(createCard(item));
+    });
+    agregarTarjeta(newList)
+    // Add them to the page... for instance the <body>
+    $(function (newList) {
+      $('#restaurantlist').append(cards);
+      cardsImage = $(".img-square-wrapper")
+      console.log(cardsImage)
+      for (i = 0; i < newList.length; i++) {
+        $(cardsImage[i]).attr("src", newList[i].placePhoto[0].getUrl());
+      }
+    })
   }
 }
- // Set markers at the location of each place result
- function createMarkers(places) {
-  places.forEach(place => {
-    let marker = new google.maps.Marker({
-      position: place.geometry.location,
-      map: map,
-      title: place.name
-    });
-    /* TODO: Step 4B: Add click listeners to the markers */
-    // Add click listener to each marker
-    google.maps.event.addListener(marker, 'click', () => {
-      let request = {
-        placeId: place.place_id,
-        fields: ['name', 'formatted_address', 'geometry', 'rating',
-          'website', 'photos']
-      };
-      
-      /* Only fetch the details of a place when the user clicks on a marker.
-       * If we fetch the details for all place results as soon as we get
-       * the search response, we will hit API rate limits. */
-      service.getDetails(request, (placeResult, status) => {
-        showDetails(placeResult, marker, status)
-        console.log(placeResult)
-      });
-    });
-    // Adjust the map bounds to include the location of this marker
-    bounds.extend(place.geometry.location);
-  });
-  /* Once all the markers have been placed, adjust the bounds of the map to
-   * show all the markers within the visible area. */
-  map.fitBounds(bounds);
-}
+function createPosMarker(pos) {
+        let icons = {
+          url: '..//Images/mylocation.png',
+          scaledSize: new google.maps.Size(50, 50), // scaled size
+          origin: new google.maps.Point(0, 0), // origin
+          anchor: new google.maps.Point(0, 0)
+        }
+
+        marker = new google.maps.Marker({
+          position: pos,
+          icon: icons,
+          map: map
+        })
+      }
+// Set markers at the location of each place result
+function createMarkers(places) {
+        let icons = {
+          url: '..//Images/cutlery.svg',
+          scaledSize: new google.maps.Size(50, 50), // scaled size
+          origin: new google.maps.Point(0, 0), // origin
+          anchor: new google.maps.Point(0, 0)
+        }
+        places.forEach(place => {
+          let marker = new google.maps.Marker({
+            position: place.geometry.location,
+            map: map,
+            title: place.name,
+            icon: icons
+          });
+          /* TODO: Step 4B: Add click listeners to the markers */
+          // Add click listener to each marker
+          google.maps.event.addListener(marker, 'click', () => {
+            let request = {
+              placeId: place.place_id,
+              fields: ['name', 'formatted_address', 'geometry', 'rating',
+                'website', 'photos', 'vicinity']
+            };
+            /* Only fetch the details of a place when the user clicks on a marker.
+             * If we fetch the details for all place results as soon as we get
+             * the search response, we will hit API rate limits. */
+            service.getDetails(request, (placeResult, status) => {
+              showDetails(placeResult, marker, status)
+            });
+          });
+
+          // Adjust the map bounds to include the location of this marker
+          bounds.extend(place.geometry.location);
+        });
+        /* Once all the markers have been placed, adjust the bounds of the map to
+         * show all the markers within the visible area. */
+        map.fitBounds(bounds);
+      }
 function showDetails(placeResult, marker, status) {
-  if (status == google.maps.places.PlacesServiceStatus.OK) {
-    let placeInfowindow = new google.maps.InfoWindow();
-    let rating = "None";
-    if (placeResult.rating) rating = placeResult.rating;
-    placeInfowindow.setContent('<div><strong>' + placeResult.name +
-      '</strong><br>' + 'Rating: ' + rating + '</div>');
-    placeInfowindow.open(marker.map, marker);
-    currentInfoWindow.close();
-    currentInfoWindow = placeInfowindow;
-  } else {
-    console.log('showDetails failed: ' + status);
-  }
-}
+        if (status == google.maps.places.PlacesServiceStatus.OK) {
+          let placeInfowindow = new google.maps.InfoWindow();
+          let rating = "None";
+          if (placeResult.rating) rating = placeResult.rating;
+          placeInfowindow.setContent('<div><strong>' + placeResult.name +
+            '</strong><br>' + 'Rating: ' + rating + '</div>');
+          placeInfowindow.open(marker.map, marker);
+          currentInfoWindow.close();
+          currentInfoWindow = placeInfowindow;
+        } else {
+          console.log('showDetails failed: ' + status);
+        }
+      }
+
+  function createJSON(listPlaces) {
+        let newJson = []
+
+        for (i = 0; i < listPlaces.length; i++) {
+          newJson.push({
+            placeName: listPlaces[i].name,
+            placeReview: listPlaces[i].reviews,
+            placeRating: listPlaces[i].rating,
+            placePhoto: listPlaces[i].photos,
+            placeVecinity: listPlaces[i].vicinity
+
+          })
+        }
+        /*
+        createCard(newJson)
+        var cards = $();
+        // Store all the card nodes
+        newJson.forEach(function(item, i) {
+        cards = cards.add(createCard(item));
+        });
+    
+    // Add them to the page... for instance the <body>
+        $(function() {
+        $('#restaurantlist').append(cards);
+        });
+    */
+        return newJson
+
+      }
+
+  function replaceCardsData(places) {
+        let cardsTitle = $(".card-title")
+        cardsText = $(".card-text")
+        cardsImage = $(".img-square-wrapper")
 
 
-let places = [
-  {
-    name: "Tacos el paisa",
-    location: [19.4968158, -99.2007130],
-    rating: 4.2,
-    photo: ['https://http2.mlstatic.com/corrida-financiera-para-proyecto-tacos-puesto-D_NQ_NP_735701-MLM20373186463_082015-O.webp'],
-    description: "Deliciosos tacos de pastor, asada, chuleta y vegetarianos. Con diversas opciones de salsas"
-  },
-  {
-    name: "Tortas el loro",
-    location: [19.4971688, -99.1988667],
-    rating: 3.2,
-    photo: ['https://http2.mlstatic.com/D_NQ_NP_600593-MLM31810987438_082019-W.jpg'],
-    description: "Deliciosos tacos al vapor de buche,ojo,lengua,maciza "
-  },
-  {
-    name: "Carnitas el tio",
-    location: [19.4946599, -99.1986569],
-    rating: 4.7,
-    photo: ['https://s3-media0.fl.yelpcdn.com/bphoto/VdbnBRjAIP8Ss7kZgemUvA/o.jpg'],
-    description: "Deliciosos tacos de pastor, asada, chuleta y vegetarianos. Con diversas opciones de salsas"
-  },
-  {
-    name: "Tacos el gallo",
-    location: [19.4936983, -99.2016597],
-    rating: 4.9,
-    photo: ['https://i.pinimg.com/originals/0d/dc/59/0ddc596d1a893e5552d75575670eaaaa.jpg'],
-    description: "Deliciosos tacos de pastor, asada, chuleta y vegetarianos. Con diversas opciones de salsas"
+        for (i = 0; i < places.length; i++) {
+          rating = places[i].placeRating
+          $(cardsTitle[i]).html(places[i].placeName)
+          $(cardsText[i]).text(places[i].placeVecinity)
+          /*if (rating >= 4 && rating <= 5){
+              $("span[class='fa fa-star']").addClass("checked");*/
 
-  },
-  {
-    name: 'Fonda "La Doña"',
-    location: [19.4949635, -99.2038869],
-    rating: 3.9,
-    photo: ['https://media-cdn.tripadvisor.com/media/photo-s/01/7d/9f/64/the-ambience-bohemian.jpg'],
-    description: "Platillos mexicanos y comida corrida del dia, "
+          addStarRating(rating);
+          $(cardsImage[i]).attr("src", places[i].placePhoto[0].getUrl());
+        }
+      }
 
-  }
-];
+function addStarRating(rating) {
+        $stars = $("span[class='fa fa-star']")
+        if (rating >= 4.5 && rating <= 5) {
+          $stars.addClass("checked");
+        } else if (rating >= 4 && rating <= 4.5) {
+          for (i = 0; i < 5; i++) {
+
+          }
+          //  block of code to be executed if the condition1 is false and condition2 is false
+        }
+      }
 
 
+//creates modal window 
+var modal = document.getElementById("myModal");
+    // Get the button that opens the modal
+    var btn = document.getElementById("myBtn");
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+    // When the user clicks on the button, open the modal
+    $("button.btn.btn-danger").click(function () {
+      modal.style.display = "block";
+    });
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+      modal.style.display = "none";
+    }
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
 
-function createCards(listPlaces) {
-let cardsTitle = $(".card-title")
-    cardsText = $(".card-text")
-    cardsImage = $(".img-square-wrapper")
+    function createCard(cardData) {
+      cardTemplate = [
+        '<div class="row">',
+        '<div class="card">',
+        '<div class="card-horizontal">',
+        '<div class="">',
+        '<img class="img-square-wrapper"',
+        'src=""',
+        'alt="Card image cap">',
+        '</div>',
+        '<div class="card-body">',
+        '<h2 class="card-title text-center h5">',
+        cardData.placeName || "No name provided",
+        '</h2>',
+        '<p class="card-text text-justify">',
+        cardData.placeVecinity || "No name provided",
+        '</p>',
+        '<span> Rating:',
+        cardData.placeRating || "No name provided",
+        '</span>',
+        '<span class="fa fa-star"></span>',
+        '<span class="fa fa-star"></span>',
+        '<span class="fa fa-star"></span>',
+        '<span class="fa fa-star"></span>',
+        '<span class="fa fa-star"></span>',
+        '<button type="button" class="btn btn-danger">Add review</button>',
+        '</div>',
+        '</div>',
+        '</div>',
+        '</div>'
+      ];
+      // a jQuery node
+      return $(cardTemplate.join(''));
+
+    }
 
 
-  for (i = 0; i < listPlaces.length; i++) {
-    $(cardsTitle[i]).html(listPlaces[i].name)
-    $(cardsText[i]).text(listPlaces[i].reviews) 
-    $(cardsImage[i]).attr("src",listPlaces[i].photos[0].getUrl());
-}
+/* var cards = $();
+// Store all the card nodes
+data.forEach(function(item, i) {
+  cards = cards.add(createCard(item));
+});
 
-} 
+// Add them to the page... for instance the <body>
+$(function() {
+  $('restaurantlist').append(cards);
+});  */
