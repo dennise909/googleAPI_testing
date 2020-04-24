@@ -36,9 +36,8 @@
     display: flex;
     flex: 1 1 auto;
 }
-.card{
-    margin-left: 10px;
-    padding:5px 10px !important; 
+.card {
+    margin: 15 auto; /* Added */
 }
 
   table {
@@ -659,4 +658,29 @@
     color: black;
     text-decoration: none;
     cursor: pointer;
+  }
+
+  .stars-outer {
+    display: inline-block;
+    position: relative;
+    font-family: 'Font Awesome\ 5 Free'; 
+    font-weight: 900;
+  }
+   
+  .stars-outer::before {
+    content: "\f005 \f005 \f005 \f005 \f005";
+  }
+   
+  .stars-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 70%;
+  }
+   
+  .stars-inner::before {
+    content: "\f005 \f005 \f005 \f005 \f005";
+    color: #f8ce0b;
   }
