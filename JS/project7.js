@@ -1,4 +1,3 @@
-
 let pos;
 let map;
 let bounds;
@@ -11,7 +10,7 @@ function initMap() {
   bounds = new google.maps.LatLngBounds();
   infoWindow = new google.maps.InfoWindow;
   currentInfoWindow = infoWindow;
-  
+
   /* TODO: Step 4A3: Add a generic sidebar */
   // Try HTML5 geolocation
   if (navigator.geolocation) {
@@ -28,14 +27,14 @@ function initMap() {
       createPosMarker(pos);
       infoWindow.open(map);
       map.setCenter(pos);
-      getCoordinates(map,pos);
+      newRestMarker(map, pos);
       // Call Places Nearby Search on user's location
       getNearbyPlaces(pos);
     }, () => {
       // Browser supports geolocation, but user has denied permission
       handleLocationError(true, infoWindow);
     });
- 
+
   } else {
     // Browser doesn't support geolocation
     handleLocationError(false, infoWindow);
@@ -75,94 +74,183 @@ function nearbyCallback(results, status) {
     createMarkers(results);
     let newList = createJSON(results);
     createCard(newList)
-    replaceCardsData(newList)
-    modalWindow()
-    addStarRating(newList)
+    addCreatedCards(newList)
+    addPhototoCard(newList)
+    replaceCardContent(newList)
     filterCardbyrate(newList)
+    addStarRating(newList)
   }
 }
 
-function getCoordinates(map,pos){
-var myLatlng = pos;
-    infoWindow2 = new google.maps.InfoWindow(
-    {content: 'Click to add new restaurant', position: myLatlng});
-    infoWindow2.open(map);
+function newRestMarker(map, pos) {
+  var myLatlng = pos;
+  infoWindow2 = new google.maps.InfoWindow(
+    { content: 'Click on the map to add new restaurant', position: myLatlng });
+  infoWindow2.open(map);
+
   // Configure the click listener.
-   map.addListener('click', function(mapsMouseEvent) {
-    let icons = {
-      url: '..//Images/mylocation.png',
-      scaledSize: new google.maps.Size(50, 50), // scaled size
-      origin: new google.maps.Point(0, 0), // origin
-      anchor: new google.maps.Point(0, 0)
-    }
-  
-    marker = new google.maps.Marker({
-      position: pos,
-      icon: icons,
-      map: map
-    })    
-     // Close the current InfoWindow.
-        infoWindow2.close();
-        currentPlace = {position: mapsMouseEvent.latLng.toString()}
-        console.log(currentPlace.position)
-        // Create a new InfoWindow.
-        infoWindow2 = new google.maps.InfoWindow({position: mapsMouseEvent.latLng});
-        infoWindow2.setContent(mapsMouseEvent.latLng.toString());
-        infoWindow2.open(map);
-      });
+  map.addListener('click', function (mapsMouseEvent) {
+
+    let iconImage = '..//Images/cutlery.svg';
+    let marker = createPosMarker(mapsMouseEvent.latLng, { title: 'Hola' }, iconImage)
+    // Close the current InfoWindow.
+    infoWindow2.close();
+    currentPlace = { position: mapsMouseEvent.latLng.toString() }
+    //console.log(currentPlace.position)
+    modalWindow("modal-newrestaurant", "map", "content-restcard")
+    let divModal = document.getElementById("modal-newrestaurant")
+        divContent = document.getElementById("content-restcard")
+        span = document.getElementById("close-span")
+    divModal.style.width = "67%";
+    divModal.style.height = "73%";
+    divContent.style.width = "50%";
+    divContent.style.height = "50%";
+    content = $();
+    content = content.add(addRestaurantForm())
+    $('#content-restcard').append(content)
+    console.log(name)
     
-}
-function modalWindow() {
-  // creates the modal window
-  var modal = document.getElementById("myModal");
-  // Get the button that opens the modal
-  btn = document.getElementById("btn btn-danger");
-  // Get the <span> element that closes the modal
-  span = document.getElementsByClassName("close")[0];
-  // When the user clicks on the button, open the modal
-  $("button.btn.btn-danger").click(function () {
-    modal.style.display = "block";
+    $("#submitForm.btn.btn-info").click(function () {
+      let newRestaurant = [];
+          rating = parseFloat($("#inputRating.form-control").val())
+          name = $("#inputName.form-control").val()
+          address = $("#inputAddress.form-control").val()
+
+         newRestaurant.push({
+          placeName: name,
+          placeReview: [],
+          placeRating: rating,
+          placePhoto: undefined,
+          placeVecinity: address,
+
+    })
+
+   let divModal = document.getElementById("modal-newrestaurant")
+    divModal.remove();
+    divModal.style.display = "none";
+
+    createCard(newRestaurant)
+    addCreatedCards(newRestaurant)
+   /* window.addEventListener('load', function() {
+      document.querySelector('input[type="file"]').addEventListener('change', function() {
+          if (this.files && this.files[0]) {
+              var img = document.getElementById('myImg');  // $('img')[0]
+              img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+              img.onload = imageIsLoaded;
+          }
+      });
+   });
+    
+    function imageIsLoaded() { 
+      alert(this.src);  // blob url
+     cardsImage = $(".img-square-wrapper")
+     $(cardsImage[20]).attr("src", this.src);
+      // update width and height ...
+    }*/
+    //cardsImage = $(".img-square-wrapper")
+    //$(cardsImage[20]).attr("src", "..//Images/img_not_found.jpg");
+    //$('input[type=file]').change(function () {
+    //  console.dir(this.files[0])
+//})
+    cardsImage = $(".img-square-wrapper")
+   $(cardsImage[20]).attr("src", '..//Images/restaurant-chocolat.jpg');
+    addStarRating(newRestaurant)
+    
+
+    });
+
+
+  infoWindow3 = new google.maps.InfoWindow(
+     { content: "laJosefina", position: currentPlace });
+  infoWindow3.open(map);
+   
+    
+    
+    span.onclick = function () {
+      let divModal = document.getElementById("modal-newrestaurant")
+      divModal.remove();
+      divModal.style.display = "none";
+      // ocultar la lista actual
+    }
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      let divModal = document.getElementById("modal-newrestaurant")
+      if (event.target == divModal) {
+        divModal.remove();
+        divModal.style.display = "none";
+      }
+    }
   });
-  // When the user clicks on <span> (x), close the modal
+}
+
+function modalWindow(idModal, idDivContainer, idContent) {
+  this.divModal = document.createElement("div");
+  this.divModal.id = idModal;
+  this.divModal.classList.add("modal")
+  this.divModal.style.display = "block";
+
+  this.divContent = document.createElement("div");
+  this.divContent.classList.add("modal-content");
+  this.divContent.id = idContent;
+
+  document.getElementById(idDivContainer).appendChild(divModal);
+  document.getElementById(idModal).appendChild(divContent);
+
+  this.span = document.createElement("span")
+  this.span.classList.add("close");
+  this.span.innerHTML = "&times;";
+  this.span.id = "close-span"
+
+  divContent.appendChild(span)
+
+
+}
+
+function closeModalWindow (nameContainer){
+  span = document.getElementById("close-span")
   span.onclick = function () {
-    modal.style.display = "none";
+    let divModal = document.getElementById(nameContainer)
+    divModal.remove();
+    divModal.style.display = "none";
+    // ocultar la lista actual
   }
   // When the user clicks anywhere outside of the modal, close it
   window.onclick = function (event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
+    let divModal = document.getElementById(nameContainer)
+    if (event.target == divModal) {
+      divModal.remove();
+      divModal.style.display = "none";
     }
-  }
-}
-function createPosMarker(pos) {
-  let icons = {
-    url: '..//Images/mylocation.png',
+
+}}
+
+function createPosMarker(pos, markerOptions, iconImage) {
+  markerOptions = markerOptions || {}
+
+  icon = {
+    url: iconImage || '..//Images/mylocation.png',
     scaledSize: new google.maps.Size(50, 50), // scaled size
     origin: new google.maps.Point(0, 0), // origin
     anchor: new google.maps.Point(0, 0)
   }
 
-  marker = new google.maps.Marker({
+  return new google.maps.Marker({
+    ...markerOptions,
     position: pos,
-    icon: icons,
+    icon: icon,
     map: map
   })
 }
 // Set markers at the location of each place result
 function createMarkers(places) {
-  let icons = {
-    url: '..//Images/cutlery.svg',
-    scaledSize: new google.maps.Size(50, 50), // scaled size
-    origin: new google.maps.Point(0, 0), // origin
-    anchor: new google.maps.Point(0, 0)
-  }
+  let iconImage = '..//Images/cutlery.svg';
   places.forEach(place => {
-    let marker = new google.maps.Marker({
-      position: place.geometry.location,
-      map: map,
-      title: place.name,
-      icon: icons
-    });
+    let marker = createPosMarker(
+      place.geometry.location,
+      { title: place.name },
+      iconImage
+    );
+
     /* TODO: Step 4B: Add click listeners to the markers */
     // Add click listener to each marker
     google.maps.event.addListener(marker, 'click', () => {
@@ -172,8 +260,8 @@ function createMarkers(places) {
           'website', 'photos', 'vicinity']
       };
       /* Only fetch the details of a place when the user clicks on a marker.
-       * If we fetch the details for all place results as soon as we get
-       * the search response, we will hit API rate limits. */
+      * If we fetch the details for all place results as soon as we get
+      * the search response, we will hit API rate limits. */
       service.getDetails(request, (placeResult, status) => {
         showDetails(placeResult, marker, status)
       });
@@ -217,45 +305,117 @@ function createJSON(listPlaces) {
   return newJson
 
 }
+function addCreatedCards(newList){
+  let cards = $();
+    // Store all the card nodes
+    newList.forEach(function (item) {
+      cards = cards.add(createCard(item));
+    });
+    $('#restaurantlist').append(cards);
+}
 
-function replaceCardsData(newList) {
-  var cards = $();
-  // Store all the card nodes
-  newList.forEach(function (item, i) {
-    cards = cards.add(createCard(item));
-  });
-
-  $('#restaurantlist').append(cards);
-  cardsImage = $(".img-square-wrapper")
-  for (i = 0; i < newList.length; i++) {
-    if (newList[i].placePhoto === undefined) {
-      $(cardsImage[i]).attr("src", "..//Images/img_not_found.jpg");
-      continue
-    }
-    else {
-      $(cardsImage[i]).attr("src", newList[i].placePhoto[0].getUrl());
-    }
+function addPhototoCard(newList){
+    // adds cards to the restaurant area
+    cardsImage = $(".img-square-wrapper")
+    for (i = 0; i < newList.length; i++) {
+      if (newList[i].placePhoto === undefined) {
+        $(cardsImage[i]).attr("src", "..//Images/img_not_found.jpg");
+        continue
+      }
+      else {
+        $(cardsImage[i]).attr("src", newList[i].placePhoto[0].getUrl());
+      }
   }
 }
 
+function replaceCardContent(newList) {
+  
+  // gets buttons and adds id with name od the restaurant
+  $modalButtons = $("button.btn.btn-danger")
+  $modalButtons.each(function (i) {
+    $(this).attr('id', newList[i].placeName);
+  })
 
+  document.addEventListener('click', function (e) {
+    listRestNames = []
+    for (i = 0; i < newList.length; i++) {
+      listRestNames.push(newList[i].placeName)
+    }
+
+    let clickedButton = e.target.id;
+    checkList = listRestNames.includes(clickedButton)
+    if (checkList === true) {
+      modalWindow("myModal", "modalcontainer","modal-content")
+
+      //creates card for content
+      content = $();
+      content = content.add(modalContent())
+      $('.modal-content').append(content)
+
+      //adds comments 
+      $(".btn.btn-outline-info").click(function () {
+        //$('.btn.btn-outline-info').off('click');
+        let myText = $('#fileinput').val();
+        $("ul.list-group.list-group-flush").append('<li class="list-group-item">' + myText + '</li>');
+        $("#fileinput.form-control").val('');
+      });
+
+      //adds span to item
+      span.onclick = function () {
+        document.getElementById("myModal").remove();
+        document.querySelectorAll('.row.content').forEach(function (a) {
+          a.remove()
+        })
+        divModal.style.display = "none";
+        // ocultar la lista actual
+      }
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function (event) {
+        if (event.target == divModal) {
+          document.getElementById("myModal").remove();
+          document.querySelectorAll('.row.content').forEach(function (a) {
+            a.remove()
+          })
+
+          divModal.style.display = "none";
+        }
+      }
+    }
+  });
+
+}
+
+function addModaltoContainter() {
+  containerTemplate = [
+    '<div id="myModal" class="modal">',
+    '<div class="modal-content">',
+    '<span class="close">&times;</span>',
+    '</div>',
+    '</div>'
+  ]
+  return $(containerTemplate.join(''));
+}
 function addStarRating(newJson) {
   let $divstars = $("div.row.cardarea")
-      starTotal = 5;
-      ratings = {};
+  starTotal = 5;
+  ratings = {};
 
-  $divstars.each(function(i) {
-    $(this).addClass("item"+(i+1));
-   });
-  
+  $divstars.each(function (i) {
+    $(this).addClass("item" + (i + 1));
+  });
+
   for (i = 0; i < newJson.length; i++) {
-    ratings["item" + (i+1)] = newJson[i].placeRating 
+    ratings["item" + (i + 1)] = newJson[i].placeRating
   }
 
-  for(const rating in ratings) {  
+  
+  for (const rating in ratings) {
+    console.log(rating)
     const starPercentage = (ratings[rating] / starTotal) * 100;
+    console.log(starPercentage)
     const starPercentageRounded = `${(Math.round(starPercentage / 10) * 10)}%`;
-    document.querySelector(`.${rating} .stars-inner`).style.width = starPercentageRounded; 
+    console.log(starPercentageRounded)
+    document.querySelector(`.${rating} .stars-inner`).style.width = starPercentageRounded;
   }
 
 }
@@ -276,12 +436,12 @@ function createCard(cardData) {
     cardData.placeName || "No name provided",
     '</h2>',
     '<p class="card-text text-center">',
-    cardData.placeVecinity || "No name provided",
+    cardData.placeVecinity || "No address provided",
     '</p>',
     '<div class="row">',
     '<div class="col-lg-6 col-md-3 text-right">',
     '<span> Rating :  ',
-    cardData.placeRating || "No name provided",
+    cardData.placeRating || "No rating provided",
     '</span>',
     '</div>',
     '<div class="col-lg-6 col-md-3 text-left">',
@@ -307,57 +467,112 @@ function createCard(cardData) {
 
 }
 
-  
+function modalContent() {
+  commentTemplate = [
+    '<div class="row content">',
+    '<div class="container-fluid" style="width:571px; height: 674px; overflow-y: scroll; float: center;">',
+    '<div class="card" style="width: 50rem;">',
+    '<ul class="list-group list-group-flush">',
+    ' </ul>',
+    '</div>',
+    '<div class="row input-group mb-3">',
+    '<input id="fileinput" type="text" class="form-control" placeholder="Write a review" aria-label="Recipients username" aria-describedby="basic-addon2">',
+    '<div class="input-group-append">',
+    '<button class="btn btn-outline-info" type="button">Add</button>',
+    '</div>',
+    '</div>',
+    '</div>'
+  ];
+  return $(commentTemplate.join(''));
+}
+
+
+function addRestaurantForm() {
+  formTemplate = [
+    '<div class="container-fluid" style="width:571px; height: 674px; overflow-y: scroll; float: center;">',
+    '<form>',
+    '<div class="form-group">',
+    '<label for="inputName">Restaurant name</label>',
+    '<input type="text" class="form-control" id="inputName" aria-describedby="emailHelp" placeholder="Enter name">',
+    '</div>',
+    '<div class="form-group">',
+    '<label for="inputAddress">Address</label>',
+    '<input type="text" class="form-control" id="inputAddress" placeholder="Enter address">',
+    '</div>',
+    '<div class="form-group">',
+    '<label for="inputRating">Rating</label>',
+    '<input type="number" class="form-control" id="inputRating" placeholder="Add rating">',
+    '</div>',
+    '<div class="form-group">',
+    '<input type="file" />',
+    '<br><img id="myImg" src="#" alt="your image" height=200 width=100></br>',
+    '</div>',
+    '<button type="button" id="submitForm" class="btn btn-info">Submit</button>',
+    '</form>',
+    '</div>'
+  ]
+  return $(formTemplate.join(''));
+}
+
 function filterCardbyrate(newJson) {
   let filter1 = [];
+
   $("#rate1").on('click', function () {
     filter1 = [];
+    $("div.row.cardarea").remove()
     newJson.forEach(function (item) {
       if (item.placeRating > 2 && item.placeRating < 3) {
-        if (filter1.length < newJson.length)
-          {filter1.push(item)}
+        if (filter1.length < newJson.length) { filter1.push(item) }
       }
-     });
-      $(".card,.row cardarea,.col-lg-12").remove();
-      createCard(filter1)
-      replaceCardsData(filter1)
-      modalWindow()
+    });
+    $(".card,.row cardarea,.col-lg-12").remove();
+    createCard(filter1)
+    addCreatedCards(filter1)
+    addPhototoCard(filter1)
+    replaceCardContent(filter1)
+    addStarRating(filter1)
   });
   $("#rate2").on('click', function () {
-    filter1 = [];
+    filter2 = [];
+    $("div.row.cardarea").remove()
     newJson.forEach(function (item) {
       if (item.placeRating > 3 && item.placeRating < 4) {
-        if (filter1.length < newJson.length)
-          {filter1.push(item)}
+        if (filter2.length < newJson.length) { filter2.push(item) }
       }
     });
     $(".card,.row cardarea,.col-lg-12").remove();
-    createCard(filter1)
-    replaceCardsData(filter1)
-    modalWindow()
-    
+    createCard(filter2)
+    addCreatedCards(filter2)
+    addPhototoCard(filter2)
+    replaceCardContent(filter2)
+    addStarRating(filter2)
+
   });
 
-  $("#rate3").on('click',function(){
-    filter1 = [];
+  $("#rate3").on('click', function () {
+    filter3 = [];
+    $("div.row.cardarea").remove()
     newJson.forEach(function (item) {
       if (item.placeRating >= 4 && item.placeRating <= 5) {
-        if (filter1.length < newJson.length)
-          {filter1.push(item)}
+        if (filter3.length < newJson.length) { filter3.push(item) }
       }
     });
     $(".card,.row cardarea,.col-lg-12").remove();
-    createCard(filter1)
-    replaceCardsData(filter1)
-    modalWindow()
+    createCard(filter3)
+    addCreatedCards(filter3)
+    addPhototoCard(filter3)
+    replaceCardContent(filter3)
+    addStarRating(filter3)
   });
 
-  $("#all").on('click',function(){
-    filter1 = [];
-    $(".card,.row cardarea,.col-lg-12").remove();
+  $("#all").on('click', function () {
+    // there are two on click events thats why is breaking
+    $("div.row.cardarea").remove()
     createCard(newJson)
-    replaceCardsData(newJson)
-    modalWindow()
+    addCreatedCards(newJson)
+    addPhototoCard(newJson)
+    replaceCardContent(newJson)
+    addStarRating(newJson)
   });
-  
+
 }
