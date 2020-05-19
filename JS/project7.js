@@ -11,7 +11,7 @@ function initMap() {
   infoWindow = new google.maps.InfoWindow;
   currentInfoWindow = infoWindow;
 
-  /* TODO: Step 4A3: Add a generic sidebar */
+  /* Iniciates map and gets geolocation */
   // Try HTML5 geolocation
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(position => {
@@ -58,7 +58,9 @@ function handleLocationError(browserHasGeolocation, infoWindow) {
   currentInfoWindow = infoWindow;
   // Call Places Nearby Search on the default location
   getNearbyPlaces(pos);
+  
 }
+
 function getNearbyPlaces(position) {
   let request = {
     location: position,
@@ -82,6 +84,50 @@ function nearbyCallback(results, status) {
   }
 }
 
+function getDetailsPlaces(place_id){
+    let request = {
+    placeId: place_id,
+    fields: ['name', 'place_id','review']
+  };
+  service = new google.maps.places.PlacesService(map);
+  service.getDetails(request, callback);
+}
+
+function callback(results, status) {
+  if (status == google.maps.places.PlacesServiceStatus.OK) {
+    console.log (results) 
+    let listReviews = []
+    for (i = 0; i < results.reviews.length; i++) {
+      listReviews.push(
+        results.reviews[i]
+      )}
+    console.log(listReviews)
+    for (i = 0; i < listReviews.length; i++) {
+    let myText = $('#fileinput').val();
+        $("ul.list-group.list-group-flush").append('<li class="list-group-item">' + listReviews[i].text + '</li>');
+        $("#fileinput.form-control").val('');
+      }
+  }
+}
+
+function createJSON(restaurantReview) {
+  let newJson = []
+
+  for (i = 0; i < listPlaces.length; i++) {
+    newJson.push({
+      placeId: listPlaces[i].place_id,
+      placeName: listPlaces[i].name,
+      placeReview: [],
+      placeRating: listPlaces[i].rating,
+      placePhoto: listPlaces[i].photos,
+      placeVecinity: listPlaces[i].vicinity
+
+    })
+  }
+  return newJson
+
+}
+
 function newRestMarker(map, pos) {
   var myLatlng = pos;
   infoWindow2 = new google.maps.InfoWindow(
@@ -92,11 +138,10 @@ function newRestMarker(map, pos) {
   map.addListener('click', function (mapsMouseEvent) {
 
     let iconImage = '..//Images/cutlery.svg';
-    let marker = createPosMarker(mapsMouseEvent.latLng, { title: 'Hola' }, iconImage)
+    let marker = createPosMarker(mapsMouseEvent.latLng, { title: 'La Josefina'}, iconImage)
     // Close the current InfoWindow.
     infoWindow2.close();
     currentPlace = { position: mapsMouseEvent.latLng.toString() }
-    //console.log(currentPlace.position)
     modalWindow("modal-newrestaurant", "map", "content-restcard")
     let divModal = document.getElementById("modal-newrestaurant")
         divContent = document.getElementById("content-restcard")
@@ -108,7 +153,6 @@ function newRestMarker(map, pos) {
     content = $();
     content = content.add(addRestaurantForm())
     $('#content-restcard').append(content)
-    console.log(name)
     
     $("#submitForm.btn.btn-info").click(function () {
       let newRestaurant = [];
@@ -124,38 +168,23 @@ function newRestMarker(map, pos) {
           placeVecinity: address,
 
     })
+       let divModal = document.getElementById("modal-newrestaurant")
+           fields = ["Name","inputAddress","inputRating" ]
 
-   let divModal = document.getElementById("modal-newrestaurant")
+       var fieldname;
+         fieldname = fields[0];
+           if ( name === "") {
+           alert(fieldname + " can not be empty");
+         }else {
     divModal.remove();
     divModal.style.display = "none";
 
     createCard(newRestaurant)
     addCreatedCards(newRestaurant)
-   /* window.addEventListener('load', function() {
-      document.querySelector('input[type="file"]').addEventListener('change', function() {
-          if (this.files && this.files[0]) {
-              var img = document.getElementById('myImg');  // $('img')[0]
-              img.src = URL.createObjectURL(this.files[0]); // set src to blob url
-              img.onload = imageIsLoaded;
-          }
-      });
-   });
-    
-    function imageIsLoaded() { 
-      alert(this.src);  // blob url
-     cardsImage = $(".img-square-wrapper")
-     $(cardsImage[20]).attr("src", this.src);
-      // update width and height ...
-    }*/
-    //cardsImage = $(".img-square-wrapper")
-    //$(cardsImage[20]).attr("src", "..//Images/img_not_found.jpg");
-    //$('input[type=file]').change(function () {
-    //  console.dir(this.files[0])
-//})
     cardsImage = $(".img-square-wrapper")
-   $(cardsImage[20]).attr("src", '..//Images/restaurant-chocolat.jpg');
+    $(cardsImage[20]).attr("src", '..//Images/restaurant-chocolat.jpg');
     addStarRating(newRestaurant)
-    
+    }
 
     });
 
@@ -165,12 +194,10 @@ function newRestMarker(map, pos) {
   infoWindow3.open(map);
    
     
-    
     span.onclick = function () {
       let divModal = document.getElementById("modal-newrestaurant")
       divModal.remove();
       divModal.style.display = "none";
-      // ocultar la lista actual
     }
     // When the user clicks anywhere outside of the modal, close it
     window.onclick = function (event) {
@@ -212,7 +239,6 @@ function closeModalWindow (nameContainer){
     let divModal = document.getElementById(nameContainer)
     divModal.remove();
     divModal.style.display = "none";
-    // ocultar la lista actual
   }
   // When the user clicks anywhere outside of the modal, close it
   window.onclick = function (event) {
@@ -251,7 +277,6 @@ function createMarkers(places) {
       iconImage
     );
 
-    /* TODO: Step 4B: Add click listeners to the markers */
     // Add click listener to each marker
     google.maps.event.addListener(marker, 'click', () => {
       let request = {
@@ -294,6 +319,7 @@ function createJSON(listPlaces) {
 
   for (i = 0; i < listPlaces.length; i++) {
     newJson.push({
+      placeId: listPlaces[i].place_id,
       placeName: listPlaces[i].name,
       placeReview: [],
       placeRating: listPlaces[i].rating,
@@ -328,6 +354,14 @@ function addPhototoCard(newList){
   }
 }
 
+function search(nameKey, myArray){
+  for (var i=0; i < myArray.length; i++) {
+      if (myArray[i].name === nameKey) {
+          return myArray[i];
+      }
+  }
+}
+
 function replaceCardContent(newList) {
   
   // gets buttons and adds id with name od the restaurant
@@ -339,27 +373,32 @@ function replaceCardContent(newList) {
   document.addEventListener('click', function (e) {
     listRestNames = []
     for (i = 0; i < newList.length; i++) {
-      listRestNames.push(newList[i].placeName)
+      listRestNames.push({
+        name: newList[i].placeName,
+        id: newList[i].placeId
+      })
     }
 
     let clickedButton = e.target.id;
-    checkList = listRestNames.includes(clickedButton)
-    if (checkList === true) {
+    checkList = search (clickedButton,listRestNames)
+      if (checkList.name == clickedButton){
       modalWindow("myModal", "modalcontainer","modal-content")
-
+      
       //creates card for content
       content = $();
       content = content.add(modalContent())
       $('.modal-content').append(content)
-
+      getDetailsPlaces(checkList.id)
+      divContent.style.width = "50%";
+      divContent.style.height = "70%";
       //adds comments 
       $(".btn.btn-outline-info").click(function () {
-        //$('.btn.btn-outline-info').off('click');
+
         let myText = $('#fileinput').val();
         $("ul.list-group.list-group-flush").append('<li class="list-group-item">' + myText + '</li>');
         $("#fileinput.form-control").val('');
       });
-
+      
       //adds span to item
       span.onclick = function () {
         document.getElementById("myModal").remove();
@@ -367,7 +406,6 @@ function replaceCardContent(newList) {
           a.remove()
         })
         divModal.style.display = "none";
-        // ocultar la lista actual
       }
       // When the user clicks anywhere outside of the modal, close it
       window.onclick = function (event) {
@@ -383,6 +421,22 @@ function replaceCardContent(newList) {
     }
   });
 
+}
+
+function validateForm()
+{
+  var fields = ["Name","Address","Rating" ]
+
+  var i, l = fields.length;
+  var fieldname;
+  for (i = 0; i < l; i++) {
+    fieldname = fields[i];
+    if (document.forms["register"][fieldname].value === "") {
+      alert(fieldname + " can not be empty");
+      return false;
+    }
+  }
+  return true;
 }
 
 function addModaltoContainter() {
@@ -410,11 +464,8 @@ function addStarRating(newJson) {
 
   
   for (const rating in ratings) {
-    console.log(rating)
     const starPercentage = (ratings[rating] / starTotal) * 100;
-    console.log(starPercentage)
     const starPercentageRounded = `${(Math.round(starPercentage / 10) * 10)}%`;
-    console.log(starPercentageRounded)
     document.querySelector(`.${rating} .stars-inner`).style.width = starPercentageRounded;
   }
 
@@ -470,7 +521,7 @@ function createCard(cardData) {
 function modalContent() {
   commentTemplate = [
     '<div class="row content">',
-    '<div class="container-fluid" style="width:571px; height: 674px; overflow-y: scroll; float: center;">',
+    '<div class="container-fluid"height: 100%; overflow: auto; float: center;">',
     '<div class="card" style="width: 50rem;">',
     '<ul class="list-group list-group-flush">',
     ' </ul>',
@@ -490,7 +541,7 @@ function modalContent() {
 function addRestaurantForm() {
   formTemplate = [
     '<div class="container-fluid" style="width:571px; height: 674px; overflow-y: scroll; float: center;">',
-    '<form>',
+    '<form id= "restForm">',
     '<div class="form-group">',
     '<label for="inputName">Restaurant name</label>',
     '<input type="text" class="form-control" id="inputName" aria-describedby="emailHelp" placeholder="Enter name">',
@@ -504,8 +555,6 @@ function addRestaurantForm() {
     '<input type="number" class="form-control" id="inputRating" placeholder="Add rating">',
     '</div>',
     '<div class="form-group">',
-    '<input type="file" />',
-    '<br><img id="myImg" src="#" alt="your image" height=200 width=100></br>',
     '</div>',
     '<button type="button" id="submitForm" class="btn btn-info">Submit</button>',
     '</form>',
@@ -566,7 +615,6 @@ function filterCardbyrate(newJson) {
   });
 
   $("#all").on('click', function () {
-    // there are two on click events thats why is breaking
     $("div.row.cardarea").remove()
     createCard(newJson)
     addCreatedCards(newJson)
